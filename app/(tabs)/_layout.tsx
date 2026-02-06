@@ -7,17 +7,19 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import Colors from "@/constants/colors";
+import { useSettings } from "@/contexts/SettingsContext";
 
 function NativeTabLayout() {
+  const { tr } = useSettings();
   return (
     <NativeTabs>
       <NativeTabs.Trigger name="index">
         <Icon sf={{ default: "book", selected: "book.fill" }} />
-        <Label>Recipes</Label>
+        <Label>{tr("recipes")}</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="settings">
         <Icon sf={{ default: "gearshape", selected: "gearshape.fill" }} />
-        <Label>Settings</Label>
+        <Label>{tr("settings")}</Label>
       </NativeTabs.Trigger>
     </NativeTabs>
   );
@@ -29,6 +31,7 @@ function ClassicTabLayout() {
   const isWeb = Platform.OS === "web";
   const isIOS = Platform.OS === "ios";
   const insets = useSafeAreaInsets();
+  const { tr } = useSettings();
 
   return (
     <Tabs
@@ -68,7 +71,7 @@ function ClassicTabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Recipes",
+          title: tr("recipes"),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="book-outline" size={size} color={color} />
           ),
@@ -77,7 +80,7 @@ function ClassicTabLayout() {
       <Tabs.Screen
         name="settings"
         options={{
-          title: "Settings",
+          title: tr("settings"),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="settings-outline" size={size} color={color} />
           ),

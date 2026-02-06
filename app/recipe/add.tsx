@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import {
   StyleSheet,
   Text,
@@ -11,11 +11,12 @@ import {
   Keyboard,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons, Feather } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useRecipes, Ingredient, Step } from "@/contexts/RecipeContext";
+import { useSettings } from "@/contexts/SettingsContext";
 import { AVAILABLE_UNITS, findNutritionEntry } from "@/constants/nutrition";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 
@@ -27,12 +28,16 @@ function IngredientItem({
   ingredient,
   onUpdate,
   onRemove,
+  language,
+  tr,
 }: {
   ingredient: Ingredient;
   onUpdate: (updated: Ingredient) => void;
   onRemove: () => void;
+  language: string;
+  tr: (key: string) => string;
 }) {
-  const matched = findNutritionEntry(ingredient.name);
+  const matched = findNutritionEntry(ingredient.name, language);
   const [showUnits, setShowUnits] = useState(false);
 
   return (
@@ -46,7 +51,7 @@ function IngredientItem({
             onUpdate({ ...ingredient, quantity: num });
           }}
           keyboardType="decimal-pad"
-          placeholder="Qty"
+          placeholder={tr("qty")}
           placeholderTextColor={Colors.light.textTertiary}
         />
         <Pressable
@@ -64,7 +69,7 @@ function IngredientItem({
           style={styles.ingredientNameInput}
           value={ingredient.name}
           onChangeText={(t) => onUpdate({ ...ingredient, name: t })}
-          placeholder="Ingredient name"
+          placeholder={tr("ingredientName")}
           placeholderTextColor={Colors.light.textTertiary}
         />
         <Pressable onPress={onRemove} style={styles.removeBtn}>
@@ -112,8 +117,8 @@ function IngredientItem({
           />
           <Text style={styles.matchText}>
             {matched
-              ? `Matched: ${matched.name}`
-              : "No nutrition data found"}
+              ? `${tr("matched")}: ${matched.name}`
+              : tr("noNutritionData")}
           </Text>
         </View>
       )}
@@ -126,11 +131,13 @@ function StepItem({
   index,
   onUpdate,
   onRemove,
+  tr,
 }: {
   step: Step;
   index: number;
   onUpdate: (updated: Step) => void;
   onRemove: () => void;
+  tr: (key: string) => string;
 }) {
   return (
     <View style={styles.stepItem}>
@@ -141,7 +148,7 @@ function StepItem({
         style={styles.stepInput}
         value={step.text}
         onChangeText={(t) => onUpdate({ ...step, text: t })}
-        placeholder={`Describe step ${index + 1}...`}
+        placeholder={`${tr("describeStep")} ${index + 1}...`}
         placeholderTextColor={Colors.light.textTertiary}
         multiline
         textAlignVertical="top"
@@ -157,6 +164,7 @@ export default function AddRecipeScreen() {
   const insets = useSafeAreaInsets();
   const { editId } = useLocalSearchParams<{ editId?: string }>();
   const { addRecipe, updateRecipe, getRecipe } = useRecipes();
+  const { language, tr } = useSettings();
   const isEditing = !!editId;
   const existingRecipe = isEditing ? getRecipe(editId) : undefined;
 
@@ -217,7 +225,7 @@ export default function AddRecipeScreen() {
 
   const handleSave = async () => {
     if (!title.trim()) {
-      Alert.alert("Missing Title", "Please enter a recipe title.");
+      Alert.alert(tr("missingTitle"), tr("enterTitle"));
       return;
     }
 
@@ -225,16 +233,13 @@ export default function AddRecipeScreen() {
       (i) => i.name.trim() && i.quantity > 0
     );
     if (validIngredients.length === 0) {
-      Alert.alert(
-        "Missing Ingredients",
-        "Please add at least one ingredient with a name and quantity."
-      );
+      Alert.alert(tr("missingIngredients"), tr("addOneIngredient"));
       return;
     }
 
     const validSteps = steps.filter((s) => s.text.trim());
     if (validSteps.length === 0) {
-      Alert.alert("Missing Steps", "Please add at least one step.");
+      Alert.alert(tr("missingSteps"), tr("addOneStep"));
       return;
     }
 
@@ -246,7 +251,7 @@ export default function AddRecipeScreen() {
       const data = {
         title: title.trim(),
         servings: Math.max(parseInt(servings) || 1, 1),
-        ingredients: validIngredients.map((i, idx) => ({
+        ingredients: validIngredients.map((i) => ({
           ...i,
           name: i.name.trim(),
         })),
@@ -258,13 +263,13 @@ export default function AddRecipeScreen() {
       };
 
       if (isEditing && editId) {
-        await updateRecipe(editId, data);
+        await updateRecipe(editId, data, language);
       } else {
-        await addRecipe(data);
+        await addRecipe(data, language);
       }
       router.back();
     } catch (e) {
-      Alert.alert("Error", "Failed to save recipe. Please try again.");
+      Alert.alert(tr("error"), tr("saveFailed"));
     } finally {
       setIsSaving(false);
     }
@@ -288,7 +293,7 @@ export default function AddRecipeScreen() {
           <Ionicons name="close" size={24} color={Colors.light.text} />
         </Pressable>
         <Text style={styles.headerTitle}>
-          {isEditing ? "Edit Recipe" : "New Recipe"}
+          {isEditing ? tr("editRecipe") : tr("newRecipe")}
         </Text>
         <Pressable
           onPress={handleSave}
@@ -312,19 +317,19 @@ export default function AddRecipeScreen() {
         bottomOffset={60}
       >
         <View style={styles.fieldGroup}>
-          <Text style={styles.label}>Recipe Title</Text>
+          <Text style={styles.label}>{tr("recipeTitle")}</Text>
           <TextInput
             style={styles.titleInput}
             value={title}
             onChangeText={setTitle}
-            placeholder="e.g. Grandma's Chicken Soup"
+            placeholder={tr("recipeTitlePlaceholder")}
             placeholderTextColor={Colors.light.textTertiary}
             autoFocus={!isEditing}
           />
         </View>
 
         <View style={styles.fieldGroup}>
-          <Text style={styles.label}>Servings</Text>
+          <Text style={styles.label}>{tr("servingsLabel")}</Text>
           <View style={styles.servingsRow}>
             <Pressable
               onPress={() => {
@@ -358,10 +363,10 @@ export default function AddRecipeScreen() {
 
         <View style={styles.fieldGroup}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.label}>Ingredients</Text>
+            <Text style={styles.label}>{tr("ingredients")}</Text>
             <Pressable onPress={addIngredient} style={styles.addItemBtn}>
               <Ionicons name="add-circle" size={22} color={Colors.light.tint} />
-              <Text style={styles.addItemText}>Add</Text>
+              <Text style={styles.addItemText}>{tr("add")}</Text>
             </Pressable>
           </View>
           {ingredients.map((ing, index) => (
@@ -370,16 +375,18 @@ export default function AddRecipeScreen() {
               ingredient={ing}
               onUpdate={(u) => updateIngredient(index, u)}
               onRemove={() => removeIngredient(index)}
+              language={language}
+              tr={tr}
             />
           ))}
         </View>
 
         <View style={styles.fieldGroup}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.label}>Steps</Text>
+            <Text style={styles.label}>{tr("steps")}</Text>
             <Pressable onPress={addStep} style={styles.addItemBtn}>
               <Ionicons name="add-circle" size={22} color={Colors.light.tint} />
-              <Text style={styles.addItemText}>Add</Text>
+              <Text style={styles.addItemText}>{tr("add")}</Text>
             </Pressable>
           </View>
           {steps.map((step, index) => (
@@ -389,6 +396,7 @@ export default function AddRecipeScreen() {
               index={index}
               onUpdate={(u) => updateStep(index, u)}
               onRemove={() => removeStep(index)}
+              tr={tr}
             />
           ))}
         </View>
@@ -399,11 +407,7 @@ export default function AddRecipeScreen() {
             size={18}
             color={Colors.light.accent}
           />
-          <Text style={styles.infoText}>
-            Nutrition values are calculated automatically when you save. The
-            calculator matches ingredient names to a built-in nutrition database.
-            Use common names for best results (e.g. "chicken breast", "olive oil").
-          </Text>
+          <Text style={styles.infoText}>{tr("nutritionInfo")}</Text>
         </View>
       </KeyboardAwareScrollViewCompat>
     </View>

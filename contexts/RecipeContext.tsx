@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useMemo, ReactNode, useCallback } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { calculateNutrition, NutritionPer100g } from "@/constants/nutrition";
+import { Language } from "@/constants/translations";
 
 export interface Ingredient {
   id: string;
@@ -34,8 +35,8 @@ export interface Recipe {
 interface RecipeContextValue {
   recipes: Recipe[];
   isLoading: boolean;
-  addRecipe: (recipe: Omit<Recipe, "id" | "nutrition" | "createdAt" | "updatedAt">) => Promise<Recipe>;
-  updateRecipe: (id: string, recipe: Omit<Recipe, "id" | "nutrition" | "createdAt" | "updatedAt">) => Promise<Recipe>;
+  addRecipe: (recipe: Omit<Recipe, "id" | "nutrition" | "createdAt" | "updatedAt">, lang?: Language) => Promise<Recipe>;
+  updateRecipe: (id: string, recipe: Omit<Recipe, "id" | "nutrition" | "createdAt" | "updatedAt">, lang?: Language) => Promise<Recipe>;
   deleteRecipe: (id: string) => Promise<void>;
   getRecipe: (id: string) => Recipe | undefined;
 }
@@ -77,10 +78,11 @@ export function RecipeProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const addRecipe = useCallback(async (data: Omit<Recipe, "id" | "nutrition" | "createdAt" | "updatedAt">): Promise<Recipe> => {
+  const addRecipe = useCallback(async (data: Omit<Recipe, "id" | "nutrition" | "createdAt" | "updatedAt">, lang?: Language): Promise<Recipe> => {
     const nutrition = calculateNutrition(
       data.ingredients.map((i) => ({ name: i.name, quantity: i.quantity, unit: i.unit })),
-      data.servings
+      data.servings,
+      lang
     );
     const recipe: Recipe = {
       ...data,
@@ -95,10 +97,11 @@ export function RecipeProvider({ children }: { children: ReactNode }) {
     return recipe;
   }, [recipes]);
 
-  const updateRecipe = useCallback(async (id: string, data: Omit<Recipe, "id" | "nutrition" | "createdAt" | "updatedAt">): Promise<Recipe> => {
+  const updateRecipe = useCallback(async (id: string, data: Omit<Recipe, "id" | "nutrition" | "createdAt" | "updatedAt">, lang?: Language): Promise<Recipe> => {
     const nutrition = calculateNutrition(
       data.ingredients.map((i) => ({ name: i.name, quantity: i.quantity, unit: i.unit })),
-      data.servings
+      data.servings,
+      lang
     );
     const updated = recipes.map((r) => {
       if (r.id === id) {

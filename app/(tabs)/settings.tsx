@@ -1,21 +1,22 @@
 import { StyleSheet, Text, View, Pressable, Platform, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useSettings } from "@/contexts/SettingsContext";
 import { REGULATION_INFO, NutritionRegulation } from "@/constants/nutrition";
+import { LANGUAGES, Language } from "@/constants/translations";
 
-const REGULATIONS: { key: NutritionRegulation; icon: string }[] = [
-  { key: "us_fda", icon: "flag" },
-  { key: "eu", icon: "globe" },
-  { key: "uk", icon: "flag" },
-  { key: "australia", icon: "flag" },
+const REGULATIONS: { key: NutritionRegulation }[] = [
+  { key: "us_fda" },
+  { key: "eu" },
+  { key: "uk" },
+  { key: "australia" },
 ];
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
-  const { regulation, setRegulation } = useSettings();
+  const { regulation, setRegulation, language, setLanguage, tr } = useSettings();
   const webTopInset = Platform.OS === "web" ? 67 : 0;
 
   return (
@@ -26,7 +27,7 @@ export default function SettingsScreen() {
           { paddingTop: (Platform.OS === "web" ? webTopInset : insets.top) + 12 },
         ]}
       >
-        <Text style={styles.headerTitle}>Settings</Text>
+        <Text style={styles.headerTitle}>{tr("settings")}</Text>
       </View>
 
       <ScrollView
@@ -34,70 +35,117 @@ export default function SettingsScreen() {
           styles.content,
           { paddingBottom: Platform.OS === "web" ? 34 + 84 : 100 },
         ]}
-        contentInsetAdjustmentBehavior="automatic"
+        showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.sectionTitle}>Nutrition Label Format</Text>
-        <Text style={styles.sectionSubtitle}>
-          Choose which country's nutrition regulation to display on your recipes
-        </Text>
+        <View style={styles.sectionBlock}>
+          <View style={styles.sectionHeaderRow}>
+            <Ionicons name="language-outline" size={20} color={Colors.light.tint} />
+            <Text style={styles.sectionTitle}>{tr("language")}</Text>
+          </View>
+          <Text style={styles.sectionSubtitle}>{tr("chooseLanguage")}</Text>
 
-        <View style={styles.regulationList}>
-          {REGULATIONS.map((reg) => {
-            const info = REGULATION_INFO[reg.key];
-            const isSelected = regulation === reg.key;
-            return (
-              <Pressable
-                key={reg.key}
-                style={[
-                  styles.regulationCard,
-                  isSelected && styles.regulationCardSelected,
-                ]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setRegulation(reg.key);
-                }}
-              >
-                <View style={styles.regulationLeft}>
-                  <View
+          <View style={styles.languageGrid}>
+            {LANGUAGES.map((lang) => {
+              const isSelected = language === lang.code;
+              return (
+                <Pressable
+                  key={lang.code}
+                  style={[
+                    styles.languageChip,
+                    isSelected && styles.languageChipSelected,
+                  ]}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setLanguage(lang.code);
+                  }}
+                >
+                  <Text
                     style={[
-                      styles.flagBadge,
-                      isSelected && styles.flagBadgeSelected,
+                      styles.languageNative,
+                      isSelected && styles.languageNativeSelected,
                     ]}
                   >
-                    <Text style={styles.flagText}>{info.flag}</Text>
-                  </View>
-                  <View style={styles.regulationInfo}>
-                    <Text
+                    {lang.nativeName}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.languageEnglish,
+                      isSelected && styles.languageEnglishSelected,
+                    ]}
+                  >
+                    {lang.name}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+
+        <View style={styles.divider} />
+
+        <View style={styles.sectionBlock}>
+          <View style={styles.sectionHeaderRow}>
+            <Ionicons name="nutrition-outline" size={20} color={Colors.light.accent} />
+            <Text style={styles.sectionTitle}>{tr("nutritionLabelFormat")}</Text>
+          </View>
+          <Text style={styles.sectionSubtitle}>{tr("chooseRegulation")}</Text>
+
+          <View style={styles.regulationList}>
+            {REGULATIONS.map((reg) => {
+              const info = REGULATION_INFO[reg.key];
+              const isSelected = regulation === reg.key;
+              return (
+                <Pressable
+                  key={reg.key}
+                  style={[
+                    styles.regulationCard,
+                    isSelected && styles.regulationCardSelected,
+                  ]}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setRegulation(reg.key);
+                  }}
+                >
+                  <View style={styles.regulationLeft}>
+                    <View
                       style={[
-                        styles.regulationName,
-                        isSelected && styles.regulationNameSelected,
+                        styles.flagBadge,
+                        isSelected && styles.flagBadgeSelected,
                       ]}
                     >
-                      {info.name}
-                    </Text>
-                    <Text style={styles.regulationFieldCount}>
-                      {info.fields.length} nutritional fields
-                    </Text>
+                      <Text style={styles.flagText}>{info.flag}</Text>
+                    </View>
+                    <View style={styles.regulationInfo}>
+                      <Text
+                        style={[
+                          styles.regulationName,
+                          isSelected && styles.regulationNameSelected,
+                        ]}
+                      >
+                        {info.name}
+                      </Text>
+                      <Text style={styles.regulationFieldCount}>
+                        {info.fields.length} {tr("nutritionalFields")}
+                      </Text>
+                    </View>
                   </View>
-                </View>
-                <View
-                  style={[
-                    styles.radioOuter,
-                    isSelected && styles.radioOuterSelected,
-                  ]}
-                >
-                  {isSelected && <View style={styles.radioInner} />}
-                </View>
-              </Pressable>
-            );
-          })}
+                  <View
+                    style={[
+                      styles.radioOuter,
+                      isSelected && styles.radioOuterSelected,
+                    ]}
+                  >
+                    {isSelected && <View style={styles.radioInner} />}
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
         </View>
 
         <View style={styles.infoCard}>
           <Ionicons name="information-circle-outline" size={20} color={Colors.light.accent} />
-          <Text style={styles.infoText}>
-            The nutrition table on each recipe page will display fields according to the selected regulation. Nutrition values are calculated per serving based on your ingredient list.
-          </Text>
+          <Text style={styles.infoText}>{tr("nutritionRegulationInfo")}</Text>
         </View>
       </ScrollView>
     </View>
@@ -125,18 +173,68 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 24,
   },
+  sectionBlock: {
+    marginBottom: 8,
+  },
+  sectionHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 4,
+  },
   sectionTitle: {
     fontSize: 18,
     fontFamily: "DMSans_600SemiBold",
     color: Colors.light.text,
-    marginBottom: 6,
   },
   sectionSubtitle: {
     fontSize: 14,
     fontFamily: "DMSans_400Regular",
     color: Colors.light.textSecondary,
-    marginBottom: 20,
+    marginBottom: 16,
     lineHeight: 20,
+    paddingLeft: 28,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: Colors.light.borderLight,
+    marginVertical: 16,
+  },
+  languageGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  languageChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 14,
+    backgroundColor: Colors.light.surface,
+    borderWidth: 1.5,
+    borderColor: Colors.light.borderLight,
+    minWidth: 100,
+    alignItems: "center",
+  },
+  languageChipSelected: {
+    borderColor: Colors.light.tint,
+    backgroundColor: "#FDF8F5",
+  },
+  languageNative: {
+    fontSize: 15,
+    fontFamily: "DMSans_600SemiBold",
+    color: Colors.light.text,
+    marginBottom: 2,
+  },
+  languageNativeSelected: {
+    color: Colors.light.tint,
+  },
+  languageEnglish: {
+    fontSize: 11,
+    fontFamily: "DMSans_400Regular",
+    color: Colors.light.textTertiary,
+  },
+  languageEnglishSelected: {
+    color: Colors.light.tint,
   },
   regulationList: {
     gap: 10,
@@ -215,7 +313,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.light.accentLight,
     borderRadius: 12,
     padding: 14,
-    marginTop: 24,
+    marginTop: 16,
     gap: 10,
     alignItems: "flex-start",
   },

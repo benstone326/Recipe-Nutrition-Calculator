@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -17,7 +16,7 @@ import { useRecipes } from "@/contexts/RecipeContext";
 import { useSettings } from "@/contexts/SettingsContext";
 import { REGULATION_INFO, NutritionField } from "@/constants/nutrition";
 
-function NutritionTable({ nutrition, regulation }: { nutrition: any; regulation: string }) {
+function NutritionTable({ nutrition, regulation, tr }: { nutrition: any; regulation: string; tr: (key: string) => string }) {
   const info = REGULATION_INFO[regulation as keyof typeof REGULATION_INFO];
   if (!info) return null;
 
@@ -25,9 +24,9 @@ function NutritionTable({ nutrition, regulation }: { nutrition: any; regulation:
     <View style={styles.nutritionCard}>
       <View style={styles.nutritionHeader}>
         <Ionicons name="nutrition-outline" size={18} color={Colors.light.accent} />
-        <Text style={styles.nutritionTitle}>Nutrition Facts</Text>
+        <Text style={styles.nutritionTitle}>{tr("nutritionFacts")}</Text>
         <View style={styles.perServingBadge}>
-          <Text style={styles.perServingText}>per serving</Text>
+          <Text style={styles.perServingText}>{tr("perServing")}</Text>
         </View>
       </View>
       <Text style={styles.regulationLabel}>{info.name}</Text>
@@ -83,16 +82,16 @@ export default function RecipeDetailScreen() {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { getRecipe, deleteRecipe } = useRecipes();
-  const { regulation } = useSettings();
+  const { regulation, tr } = useSettings();
   const recipe = getRecipe(id);
   const webTopInset = Platform.OS === "web" ? 67 : 0;
 
   if (!recipe) {
     return (
       <View style={[styles.container, styles.emptyContainer]}>
-        <Text style={styles.emptyText}>Recipe not found</Text>
+        <Text style={styles.emptyText}>{tr("recipeNotFound")}</Text>
         <Pressable onPress={() => router.back()}>
-          <Text style={styles.backLink}>Go back</Text>
+          <Text style={styles.backLink}>{tr("goBack")}</Text>
         </Pressable>
       </View>
     );
@@ -100,12 +99,12 @@ export default function RecipeDetailScreen() {
 
   const handleDelete = () => {
     Alert.alert(
-      "Delete Recipe",
-      `Are you sure you want to delete "${recipe.title}"?`,
+      tr("deleteRecipe"),
+      `${tr("deleteConfirm")} "${recipe.title}"?`,
       [
-        { text: "Cancel", style: "cancel" },
+        { text: tr("cancel"), style: "cancel" },
         {
-          text: "Delete",
+          text: tr("delete"),
           style: "destructive",
           onPress: async () => {
             await deleteRecipe(recipe.id);
@@ -168,24 +167,24 @@ export default function RecipeDetailScreen() {
         <View style={styles.metaRow}>
           <View style={styles.metaChip}>
             <Feather name="users" size={14} color={Colors.light.tint} />
-            <Text style={styles.metaChipText}>{recipe.servings} servings</Text>
+            <Text style={styles.metaChipText}>{recipe.servings} {tr("servings")}</Text>
           </View>
           <View style={styles.metaChip}>
             <Feather name="list" size={14} color={Colors.light.tint} />
-            <Text style={styles.metaChipText}>{recipe.ingredients.length} ingredients</Text>
+            <Text style={styles.metaChipText}>{recipe.ingredients.length} {tr("ingredients").toLowerCase()}</Text>
           </View>
           <View style={styles.metaChip}>
             <Feather name="layers" size={14} color={Colors.light.tint} />
-            <Text style={styles.metaChipText}>{recipe.steps.length} steps</Text>
+            <Text style={styles.metaChipText}>{recipe.steps.length} {tr("steps").toLowerCase()}</Text>
           </View>
         </View>
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Ionicons name="cart-outline" size={20} color={Colors.light.tint} />
-            <Text style={styles.sectionTitle}>Ingredients</Text>
+            <Text style={styles.sectionTitle}>{tr("ingredients")}</Text>
           </View>
-          {recipe.ingredients.map((ing, index) => (
+          {recipe.ingredients.map((ing) => (
             <View key={ing.id} style={styles.ingredientRow}>
               <View style={styles.ingredientBullet} />
               <Text style={styles.ingredientText}>
@@ -202,7 +201,7 @@ export default function RecipeDetailScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Ionicons name="list-outline" size={20} color={Colors.light.tint} />
-            <Text style={styles.sectionTitle}>Steps</Text>
+            <Text style={styles.sectionTitle}>{tr("steps")}</Text>
           </View>
           {recipe.steps.map((step, index) => (
             <View key={step.id} style={styles.stepRow}>
@@ -215,7 +214,7 @@ export default function RecipeDetailScreen() {
         </View>
 
         <View style={styles.section}>
-          <NutritionTable nutrition={recipe.nutrition} regulation={regulation} />
+          <NutritionTable nutrition={recipe.nutrition} regulation={regulation} tr={tr} />
         </View>
       </ScrollView>
     </View>

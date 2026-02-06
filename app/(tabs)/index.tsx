@@ -16,20 +16,20 @@ import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useRecipes, Recipe } from "@/contexts/RecipeContext";
+import { useSettings } from "@/contexts/SettingsContext";
 
-function RecipeCard({ recipe, onDelete }: { recipe: Recipe; onDelete: () => void }) {
-  const matchedCount = recipe.ingredients.filter((i) => {
-    const { findNutritionEntry } = require("@/constants/nutrition");
-    return findNutritionEntry(i.name) !== null;
-  }).length;
-  const totalCount = recipe.ingredients.length;
-
+function RecipeCard({
+  recipe,
+  onDelete,
+  tr,
+}: {
+  recipe: Recipe;
+  onDelete: () => void;
+  tr: (key: string) => string;
+}) {
   return (
     <Pressable
-      style={({ pressed }) => [
-        styles.card,
-        pressed && styles.cardPressed,
-      ]}
+      style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
       onPress={() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         router.push({ pathname: "/recipe/[id]", params: { id: recipe.id } });
@@ -37,11 +37,11 @@ function RecipeCard({ recipe, onDelete }: { recipe: Recipe; onDelete: () => void
       onLongPress={() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         Alert.alert(
-          "Delete Recipe",
-          `Are you sure you want to delete "${recipe.title}"?`,
+          tr("deleteRecipe"),
+          `${tr("deleteConfirm")} "${recipe.title}"?`,
           [
-            { text: "Cancel", style: "cancel" },
-            { text: "Delete", style: "destructive", onPress: onDelete },
+            { text: tr("cancel"), style: "cancel" },
+            { text: tr("delete"), style: "destructive", onPress: onDelete },
           ]
         );
       }}
@@ -58,27 +58,27 @@ function RecipeCard({ recipe, onDelete }: { recipe: Recipe; onDelete: () => void
             <View style={styles.metaItem}>
               <Feather name="list" size={12} color={Colors.light.textTertiary} />
               <Text style={styles.metaText}>
-                {recipe.ingredients.length} ingredients
+                {recipe.ingredients.length} {tr("ingredients").toLowerCase()}
               </Text>
             </View>
             <View style={styles.metaDot} />
             <View style={styles.metaItem}>
               <Feather name="layers" size={12} color={Colors.light.textTertiary} />
               <Text style={styles.metaText}>
-                {recipe.steps.length} steps
+                {recipe.steps.length} {tr("steps").toLowerCase()}
               </Text>
             </View>
             <View style={styles.metaDot} />
             <View style={styles.metaItem}>
               <Feather name="users" size={12} color={Colors.light.textTertiary} />
               <Text style={styles.metaText}>
-                {recipe.servings} serv.
+                {recipe.servings} {tr("serv")}
               </Text>
             </View>
           </View>
           <View style={styles.nutritionBadge}>
             <Text style={styles.nutritionBadgeText}>
-              {Math.round(recipe.nutrition.calories)} kcal / serving
+              {Math.round(recipe.nutrition.calories)} {tr("kcalServing")}
             </Text>
           </View>
         </View>
@@ -91,6 +91,7 @@ function RecipeCard({ recipe, onDelete }: { recipe: Recipe; onDelete: () => void
 export default function RecipeListScreen() {
   const insets = useSafeAreaInsets();
   const { recipes, isLoading, deleteRecipe } = useRecipes();
+  const { tr } = useSettings();
   const [search, setSearch] = useState("");
 
   const filteredRecipes = useMemo(() => {
@@ -113,7 +114,7 @@ export default function RecipeListScreen() {
           { paddingTop: (Platform.OS === "web" ? webTopInset : insets.top) + 12 },
         ]}
       >
-        <Text style={styles.headerTitle}>Recipes</Text>
+        <Text style={styles.headerTitle}>{tr("recipes")}</Text>
         <Pressable
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -133,7 +134,7 @@ export default function RecipeListScreen() {
           <Feather name="search" size={16} color={Colors.light.textTertiary} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search recipes or ingredients..."
+            placeholder={tr("searchPlaceholder")}
             placeholderTextColor={Colors.light.textTertiary}
             value={search}
             onChangeText={setSearch}
@@ -157,12 +158,10 @@ export default function RecipeListScreen() {
             <Ionicons name="book-outline" size={48} color={Colors.light.textTertiary} />
           </View>
           <Text style={styles.emptyTitle}>
-            {search ? "No recipes found" : "No recipes yet"}
+            {search ? tr("noRecipesFound") : tr("noRecipesYet")}
           </Text>
           <Text style={styles.emptySubtitle}>
-            {search
-              ? "Try a different search term"
-              : "Tap + to add your first recipe"}
+            {search ? tr("tryDifferentSearch") : tr("tapToAdd")}
           </Text>
         </View>
       ) : (
@@ -173,6 +172,7 @@ export default function RecipeListScreen() {
             <RecipeCard
               recipe={item}
               onDelete={() => deleteRecipe(item.id)}
+              tr={tr}
             />
           )}
           contentContainerStyle={[
@@ -180,7 +180,6 @@ export default function RecipeListScreen() {
             { paddingBottom: Platform.OS === "web" ? 34 + 84 : 100 },
           ]}
           showsVerticalScrollIndicator={false}
-          contentInsetAdjustmentBehavior="automatic"
         />
       )}
     </View>
